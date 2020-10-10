@@ -7,6 +7,8 @@ import {
   createId,
 } from '@jacobbubu/scuttlebutt-pull'
 import {
+  JobId,
+  Job,
   JobList,
   JobListOptions,
   JobOptions,
@@ -19,6 +21,8 @@ import {
 import { MergedModel } from '@jacobbubu/merged-model'
 import { Debug } from '@jacobbubu/debug'
 import { EventEmitter } from 'events'
+
+export * from '@jacobbubu/job-list'
 
 export enum ValueItems {
   Name = 0,
@@ -169,6 +173,30 @@ export class MetaJobList extends Scuttlebutt {
 
   create(opts: Partial<JobOptions> = {}) {
     return this._jobList.create(opts)
+  }
+
+  createBefore(before: Job, opts: Partial<JobOptions> = {}) {
+    return this._jobList.createBefore(before, opts)
+  }
+
+  createAfter(after: Job, opts: Partial<JobOptions> = {}) {
+    return this._jobList.createBefore(after, opts)
+  }
+
+  getLength() {
+    return this._jobList.getLength()
+  }
+
+  at(index: number) {
+    return this._jobList.at(index)
+  }
+
+  getJob(jobId: JobId, loadIfNotExist = true) {
+    return this._jobList.getJob(jobId, loadIfNotExist)
+  }
+
+  delete(jobId: JobId | JobId[]): JobId[] {
+    return this._jobList.delete(jobId)
   }
 
   on(eventName: JobListEventTypes, listener: JobListEventListenerTypes) {
