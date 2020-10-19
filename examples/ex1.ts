@@ -9,16 +9,24 @@ const main = async () => {
   const b = new CappedJobList({ id: 'B', threshold })
   const c = new CappedJobList({ id: 'C', threshold })
 
-  const job1 = a.create({ id: 'job-1', initial: 'META-1' })
+  b.on('progress', (jobId: string, data: any) => {
+    console.log(`${jobId} has progress ${data} at b`)
+  })
+  b.on('done', (jobId: string, err: any, result: any) => {
+    console.log(`${jobId} done at b`)
+  })
 
-  job1.done(null, 'DONE')
+  const job1 = a.create({ id: 'job-1', initial: 'META-1' })
 
   const a2b = a.createStream({ name: 'a-b' })
   const b2a = b.createStream({ name: 'b-a' })
   link(a2b, b2a)
 
+  job1.done(null, 'DONE')
+
   await delay(10)
-  console.log(a.toJSON(), b.toJSON(), c.toJSON())
+  console.log(a.at(0)!.toJSON())
+  console.log(b.at(0)!.toJSON())
 
   console.log("\n--- So far we haven't reached the threshold for cleanup. ---\n")
 

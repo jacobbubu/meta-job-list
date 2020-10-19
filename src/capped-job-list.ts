@@ -23,7 +23,7 @@ export class CappedJobList extends MetaJobList {
     opts.threshold = opts.threshold ?? 1
     this._opts = opts
     this.jobList.on('done', this.onJobDone.bind(this))
-    this.meta.on('changedByPeer', this.onMetaChangedByPeer.bind(this))
+    this.meta.on('changed', this.onMetaChangedByPeer.bind(this))
   }
 
   get options() {
@@ -63,12 +63,18 @@ export class CappedJobList extends MetaJobList {
     jobList: JobList,
     update: Update
   ) {
-    this.meta.set(jobId, { [this.id]: update })
+    setImmediate(() => {
+      this.meta.set(jobId, { [this.id]: update })
+    })
   }
 
   private onMetaChangedByPeer(jobId: JobId) {
+    // console.log('onMetaChangedByPeer', this.id, jobId, this.getNotifiedCount(jobId))
     if (this.getNotifiedCount(jobId) >= this.options.threshold!) {
-      this.jobList.delete(jobId)
+      setImmediate(() => {
+        // console.log('delete job', this.id, jobId)
+        this.jobList.delete(jobId)
+      })
     }
   }
 }

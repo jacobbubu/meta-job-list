@@ -12,11 +12,13 @@ describe('basic', () => {
 
     const job1 = a.create({ id: 'job-1', initial: 'META-1' })
 
-    job1.done(null, 'DONE')
-
     const a2b = a.createStream({ name: 'a-b' })
     const b2a = b.createStream({ name: 'b-a' })
     link(a2b, b2a)
+
+    await delay(10)
+
+    job1.done(null, 'DONE')
 
     await delay(10)
 
