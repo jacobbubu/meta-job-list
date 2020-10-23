@@ -13,6 +13,7 @@ const getDefaultLogger = (opts: CappedJobListOptions = {}) => {
 
 export interface CappedJobListOptions extends ScuttlebuttOptions {
   threshold?: number
+  metaCleanInterval?: number
 }
 
 export class CappedJobList extends MetaJobList {
@@ -21,9 +22,11 @@ export class CappedJobList extends MetaJobList {
   constructor(opts: CappedJobListOptions = {}) {
     super((opts = getDefaultLogger(opts)))
     opts.threshold = opts.threshold ?? 1
+    opts.metaCleanInterval = opts.metaCleanInterval ?? 5e3
     this._opts = opts
     this.jobList.on('done', this.onJobDone.bind(this))
     this.meta.on('changed', this.onMetaChangedByPeer.bind(this))
+    this.cleanMeta()
   }
 
   get options() {
@@ -69,12 +72,38 @@ export class CappedJobList extends MetaJobList {
   }
 
   private onMetaChangedByPeer(jobId: JobId) {
-    // console.log('onMetaChangedByPeer', this.id, jobId, this.getNotifiedCount(jobId))
     if (this.getNotifiedCount(jobId) >= this.options.threshold!) {
       setImmediate(() => {
-        // console.log('delete job', this.id, jobId)
         this.jobList.delete(jobId)
       })
     }
+  }
+
+  private cleanMeta() {
+    const cleanup = () => {
+      const all = this.meta.toJSON()
+      Object.keys(all).forEach((jobId) => {
+        const jobSynced = all[jobId]
+        const syncedKeys = Object.keys(jobSynced)
+        if (syncedKeys.length >= this.options.threshold!) {
+          let maxTs = 0
+          for (let i = 0; i < syncedKeys.length; i++) {
+            const ts = jobSynced[syncedKeys[i]][1]
+            if (maxTs < ts) {
+              maxTs = ts
+            }
+          }
+          if (Date.now() - maxTs > 2e3) {
+            this.meta.set(jobId, null)
+          }
+        }
+      })
+      setTimeout(() => {
+        cleanup()
+      }, this._opts.metaCleanInterval!)
+    }
+    setTimeout(() => {
+      cleanup()
+    }, this._opts.metaCleanInterval!)
   }
 }
